@@ -7,7 +7,7 @@ import SummaryCards from "../../components/results/SummaryCards";
 import AllocationChart from "../../components/results/AllocationChart";
 import BufferProgress from "../../components/results/BufferProgress";
 import DeficitWarning from "../../components/results/DeficitWarning";
-import { RefreshCw, FileText, ArrowLeft, GraduationCap, CheckCircle2, Database } from "lucide-react";
+import { RefreshCw, FileText, ArrowLeft, GraduationCap, CheckCircle2, Database, Loader2 } from "lucide-react";
 import { useAuth } from "../../lib/AuthContext";
 import NavbarAuth from "../../components/NavbarAuth";
 
@@ -22,6 +22,30 @@ function ResultsContent() {
   const [syncError, setSyncError] = useState<string | null>(null);
   const [hasAutoSaved, setHasAutoSaved] = useState(false);
   const [retrievedSummary, setRetrievedSummary] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const handleGoToDashboard = async () => {
+    if (!user?.email) return;
+    setIsRedirecting(true);
+    try {
+      const response = await fetch("/api/sso", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const data = await response.json();
+      if (data.token) {
+        window.location.href = `http://localhost:5174/login?token=${data.token}`;
+      } else {
+        console.error("Failed to fetch SSO token");
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsRedirecting(false);
+    }
+  };
+
 
   const handleAutoSaveAndFetchSummary = async () => {
     if (!user || !result) return;
@@ -297,6 +321,29 @@ function ResultsContent() {
         </div>
       </div>
 
+      {/* Go to Stock Dashboard CTA */}
+      <div className="flex justify-center">
+        <button
+          onClick={handleGoToDashboard}
+          disabled={isRedirecting || !user?.email}
+          className="group inline-flex items-center gap-3 px-8 py-4 bg-[#d9b382] hover:bg-[#e8c896] text-[#110f0d] font-bold text-sm rounded-2xl shadow-lg shadow-[#d9b382]/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {isRedirecting ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-0.5 transition-transform">
+              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+            </svg>
+          )}
+          {isRedirecting ? "Connecting..." : "Go to Stock Dashboard"}
+          {!isRedirecting && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-1 transition-transform">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          )}
+        </button>
+      </div>
+
       {/* Internal Assertion Alert */}
       <div className="p-4 bg-[#151311] border border-[#28231e] rounded-2xl flex items-center justify-between gap-4 text-[10px] text-[#a89f91]">
         <div className="flex items-center gap-2">
@@ -318,10 +365,10 @@ export default function ResultsPage() {
       <header className="max-w-7xl mx-auto w-full px-6 py-6 flex justify-between items-center relative z-10 border-b border-[#28231e] bg-[#110f0d]/90 backdrop-blur">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded border border-[#352f2a] flex items-center justify-center bg-[#1c1917]">
-            <span className="text-[#d9b382] font-bold">W</span>
+            <span className="text-[#d9b382] font-bold">A</span>
           </div>
           <div>
-            <span className="font-serif font-bold text-lg tracking-wide leading-tight text-[#f5f0e6]">WealthCommand</span>
+            <span className="font-serif font-bold text-lg tracking-wide leading-tight text-[#f5f0e6]">AARTHIAI</span>
             <p className="text-[9px] uppercase tracking-widest text-[#a89f91] font-semibold mt-0.5">Institutional Grade</p>
           </div>
         </div>
@@ -335,7 +382,7 @@ export default function ResultsPage() {
 
       {/* Footer */}
       <footer className="max-w-7xl mx-auto w-full px-6 py-6 text-center text-[10px] text-[#a89f91] relative z-10 border-t border-[#28231e]">
-        WealthCommand Planning Tool • Confidential Plan Analysis
+        AARTHIAI Planning Tool • Confidential Plan Analysis
       </footer>
     </div>
   );

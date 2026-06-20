@@ -17,7 +17,7 @@ import {
   Receipt,
   Hexagon,
   Settings,
-  HelpCircle,
+  Home,
   RefreshCw,
   Bell,
   History
@@ -178,7 +178,7 @@ function WizardForm() {
               <Hexagon size={20} className="text-[#d9b382]" />
             </div>
             <div>
-              <h1 className="font-serif font-bold text-lg tracking-wide leading-tight">WealthCommand</h1>
+              <h1 className="font-serif font-bold text-lg tracking-wide leading-tight">AARTHIAI</h1>
               <p className="text-[9px] uppercase tracking-widest text-[#a89f91] font-semibold mt-0.5">Institutional Grade</p>
             </div>
           </div>
@@ -219,10 +219,10 @@ function WizardForm() {
             <Settings size={18} />
             Settings
           </button>
-          <button className="flex items-center gap-3 text-[#a89f91] hover:text-[#f5f0e6] text-sm font-medium transition-colors w-full">
-            <HelpCircle size={18} />
-            Support
-          </button>
+          <Link href="/" className="flex items-center gap-3 text-[#a89f91] hover:text-[#f5f0e6] text-sm font-medium transition-colors w-full">
+            <Home size={18} />
+            Home
+          </Link>
           <Link href="/history" className="flex items-center gap-3 text-[#a89f91] hover:text-[#f5f0e6] text-sm font-medium transition-colors w-full">
             <History size={18} />
             History
