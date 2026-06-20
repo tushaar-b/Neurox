@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     const aiSummary = `Financial Diagnosis for ${userName}: Income is classified as ${volatilityClass} with a baseline of ${f(baselineIncome)}/mo. Needs stand at ${needsPct}%, Wants at ${wantsPct}%, and Surplus Savings at ${savePct}%. ${volatilityAdvice} ${bufferAdvice} ${experienceAdvice}`;
 
     // --- Build Notion Block Elements ---
-    const childBlocks = [
+    const childBlocks: any[] = [
       {
         object: "block",
         "type": "heading_1",

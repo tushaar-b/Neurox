@@ -3,7 +3,7 @@ export type StockRecommendations = {
   sell: string[];
 };
 
-export function getStockRecommendations(experienceLevel: string, investableSurplus: number): StockRecommendations {
+export function getStockRecommendations(experienceLevel: string | undefined, investableSurplus: number): StockRecommendations {
   const level = experienceLevel?.toLowerCase() || "beginner";
 
   if (level === "beginner") {
