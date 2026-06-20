@@ -12,6 +12,88 @@ import { useAuth } from "../../lib/AuthContext";
 import NavbarAuth from "../../components/NavbarAuth";
 import { getStockRecommendations } from "../../lib/recommendations";
 
+function StockRecommendationsGrid({ investing, result }: { investing: any, result: any }) {
+  const [prices, setPrices] = useState<Record<string, number | null>>({});
+  const [loading, setLoading] = useState(true);
+  
+  const recommendations = getStockRecommendations(investing.experienceLevel, result.investableSurplus);
+  const allStocks = [...recommendations.buy, ...recommendations.sell];
+
+  useEffect(() => {
+    async function fetchPrices() {
+      if (allStocks.length === 0) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch("/api/stocks/prices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stocks: allStocks })
+        });
+        const data = await res.json();
+        if (data.prices) {
+          setPrices(data.prices);
+        }
+      } catch (err) {
+        console.error("Failed to fetch prices:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPrices();
+  }, [investing.experienceLevel, result.investableSurplus]);
+
+  if (allStocks.length === 0) return null;
+
+  return (
+    <div className="bg-[#1c1917] border border-[#28231e] rounded-3xl p-6 space-y-4 shadow-xl">
+      <h4 className="text-sm font-bold text-[#f5f0e6] uppercase tracking-wider flex items-center gap-2">
+        <Database size={16} className="text-[#d9b382]" /> TradeSignal PRO - Recommended Trades
+      </h4>
+      <p className="text-xs text-[#a89f91] border-b border-[#28231e] pb-3">Based on your {investing.experienceLevel} experience level and investable surplus of ₹{result.investableSurplus.toLocaleString("en-IN")}</p>
+      
+      {loading ? (
+        <div className="flex justify-center items-center py-8">
+          <Loader2 size={24} className="animate-spin text-[#d9b382]" />
+          <span className="ml-3 text-sm text-[#a89f91]">Fetching Friday Closing Prices...</span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+          {recommendations.buy.map((stock, i) => (
+            <div key={`buy-${i}`} className="bg-[#151311] border border-[#28231e] rounded-xl p-5 relative overflow-hidden flex flex-col justify-between h-32 hover:border-[#352f2a] transition-all">
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-sm font-bold text-[#f5f0e6] font-serif tracking-wide">{stock}</span>
+                <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-md tracking-widest uppercase">BUY</span>
+              </div>
+              <div className="mt-auto">
+                <span className="text-[10px] text-[#a89f91] uppercase tracking-wider">Closing Price</span>
+                <div className="text-lg font-mono text-[#f5f0e6]">
+                  {prices[stock] !== undefined && prices[stock] !== null ? `₹${Number(prices[stock]).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A'}
+                </div>
+              </div>
+            </div>
+          ))}
+          {recommendations.sell.map((stock, i) => (
+            <div key={`sell-${i}`} className="bg-[#151311] border border-[#28231e] rounded-xl p-5 relative overflow-hidden flex flex-col justify-between h-32 hover:border-[#352f2a] transition-all">
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-sm font-bold text-[#f5f0e6] font-serif tracking-wide">{stock}</span>
+                <span className="text-[10px] font-bold text-[#d97757] bg-[#d97757]/10 px-2 py-1 rounded-md tracking-widest uppercase">SELL</span>
+              </div>
+              <div className="mt-auto">
+                <span className="text-[10px] text-[#a89f91] uppercase tracking-wider">Closing Price</span>
+                <div className="text-lg font-mono text-[#f5f0e6]">
+                  {prices[stock] !== undefined && prices[stock] !== null ? `₹${Number(prices[stock]).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A'}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ResultsContent() {
   const { result, resetWizard, isCompleted, investing, income } = useWizard();
   const router = useRouter();
@@ -324,34 +406,7 @@ function ResultsContent() {
 
       {/* 5. Stock Recommendations */}
       {result && result.investableSurplus > 0 && (
-        <div className="bg-[#1c1917] border border-[#28231e] rounded-3xl p-6 space-y-4 shadow-xl">
-          <h4 className="text-sm font-bold text-[#f5f0e6] uppercase tracking-wider flex items-center gap-2">
-            <Database size={16} className="text-[#d9b382]" /> TradeSignal PRO - Recommended Trades
-          </h4>
-          <p className="text-xs text-[#a89f91] border-b border-[#28231e] pb-3">Based on your {investing.experienceLevel} experience level and investable surplus of ₹{result.investableSurplus.toLocaleString("en-IN")}</p>
-          <div className="flex flex-col sm:flex-row gap-4 pt-2">
-            <div className="flex-1 bg-[#151311] border border-green-900/30 rounded-xl p-4">
-              <h5 className="text-xs font-bold text-green-400 mb-3 uppercase">Buy Suggestions</h5>
-              <ul className="space-y-2">
-                {getStockRecommendations(investing.experienceLevel, result.investableSurplus).buy.map((stock, i) => (
-                  <li key={i} className="text-sm text-[#f5f0e6] flex items-center gap-2">
-                    <CheckCircle2 size={12} className="text-green-500" /> {stock}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex-1 bg-[#151311] border border-red-900/30 rounded-xl p-4">
-              <h5 className="text-xs font-bold text-red-400 mb-3 uppercase">Sell Suggestions</h5>
-              <ul className="space-y-2">
-                {getStockRecommendations(investing.experienceLevel, result.investableSurplus).sell.map((stock, i) => (
-                  <li key={i} className="text-sm text-[#f5f0e6] flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-red-500/20 flex items-center justify-center text-[8px] font-bold text-red-500">X</span> {stock}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
+        <StockRecommendationsGrid investing={investing} result={result} />
       )}
 
       {/* Go to Stock Dashboard CTA */}
