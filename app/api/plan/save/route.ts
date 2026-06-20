@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createNotionPlan, getNotionPlanSummary, getNotionConfig } from "../../../../lib/notion";
+import { getStockRecommendations } from "../../../../lib/recommendations";
 
 // Helper to format currency
 const f = (val: number) => `₹${val.toLocaleString("en-IN")}`;
@@ -239,6 +240,70 @@ export async function POST(request: Request) {
       }
     ];
 
+    const recommendations = investableSurplus > 0 ? getStockRecommendations(experienceLevel, investableSurplus) : { buy: [], sell: [] };
+
+    if (recommendations.buy.length > 0 || recommendations.sell.length > 0) {
+      childBlocks.push(
+        {
+          object: "block",
+          "type": "divider",
+          divider: {}
+        },
+        {
+          object: "block",
+          "type": "heading_2",
+          heading_2: {
+            rich_text: [{ "type": "text", "text": { content: "📈 Stock Trade Recommendations" } }]
+          }
+        },
+        {
+          object: "block",
+          "type": "paragraph",
+          paragraph: {
+            rich_text: [{ "type": "text", "text": { content: `Based on your ${experienceLevel} experience level and investable surplus.` } }]
+          }
+        }
+      );
+
+      if (recommendations.buy.length > 0) {
+        childBlocks.push({
+          object: "block",
+          "type": "heading_3",
+          heading_3: {
+            rich_text: [{ "type": "text", "text": { content: "🟢 Buy Suggestions" } }]
+          }
+        });
+        recommendations.buy.forEach(stock => {
+          childBlocks.push({
+            object: "block",
+            "type": "bulleted_list_item",
+            bulleted_list_item: {
+              rich_text: [{ "type": "text", "text": { content: stock } }]
+            }
+          });
+        });
+      }
+
+      if (recommendations.sell.length > 0) {
+        childBlocks.push({
+          object: "block",
+          "type": "heading_3",
+          heading_3: {
+            rich_text: [{ "type": "text", "text": { content: "🔴 Sell Suggestions" } }]
+          }
+        });
+        recommendations.sell.forEach(stock => {
+          childBlocks.push({
+            object: "block",
+            "type": "bulleted_list_item",
+            bulleted_list_item: {
+              rich_text: [{ "type": "text", "text": { content: stock } }]
+            }
+          });
+        });
+      }
+    }
+
     const responseData = await createNotionPlan(
       {
         name: userName,
@@ -254,6 +319,8 @@ export async function POST(request: Request) {
         monthlyBufferContribution,
         investableSurplus,
         experienceLevel,
+        buyRecommendations: recommendations.buy.join(", "),
+        sellRecommendations: recommendations.sell.join(", "),
       },
       aiSummary,
       childBlocks,

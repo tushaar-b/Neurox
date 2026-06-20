@@ -175,6 +175,8 @@ export async function createNotionPlan(planData: any, aiSummary: string, childBl
   mapProp("Investable Surplus", planData.investableSurplus);
   mapProp("Experience Level", planData.experienceLevel || "beginner");
   mapProp("AI Financial Summary", aiSummary);
+  mapProp("Buy Recommendations", planData.buyRecommendations);
+  mapProp("Sell Recommendations", planData.sellRecommendations);
 
   const body = {
     parent: { database_id: config.plansDbId },
