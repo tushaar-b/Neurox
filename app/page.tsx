@@ -44,20 +44,8 @@ export default function Home() {
             </span>
           </div>
 
-          {/* Navigation Actions */}
+          {/* Navigation Actions — only Get Started */}
           <div className="flex items-center gap-4 sm:gap-6">
-
-            <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-[#a89f91]">
-              <Link href="/markets" className="hover:text-[#f5f0e6] transition-colors duration-200">
-                Markets
-              </Link>
-              <Link href="/portfolio" className="hover:text-[#f5f0e6] transition-colors duration-200">
-                Portfolio
-              </Link>
-              <Link href="/insights" className="hover:text-[#f5f0e6] transition-colors duration-200">
-                Insights
-              </Link>
-            </nav>
             <Link
               href="/wizard"
               className="px-4 py-1.5 bg-[#d9b382] hover:bg-[#e0d6c8] text-[#110f0d] font-extrabold text-xs rounded-full transition-all duration-200 active:scale-[0.98]"
