@@ -170,9 +170,9 @@ function City() {
       
       // Create an expanding ring originating from the click time
       float timeSinceClick = uTime - uClickTime;
-      float speed = 80.0; // Fast moving pulse
+      float speed = 40.0; // Slower moving pulse
       float ringRadius = timeSinceClick * speed;
-      float ringThickness = 12.0;
+      float ringThickness = 40.0; // Much thicker ring!
       
       // Glow intensity based on distance to the ring's current radius
       float glow = smoothstep(ringThickness, 0.0, abs(dist - ringRadius));
@@ -185,8 +185,8 @@ function City() {
       // Fade out the shockwave far away so it doesn't hit the grid edge
       glow *= smoothstep(600.0, 50.0, dist);
       
-      // Gold colour mapping (multiplied slightly to lower intensity)
-      vec3 glowColor = vec3(0.85, 0.70, 0.51) * glow * 5.0;
+      // Gold colour mapping (multiplied to high intensity for bloom)
+      vec3 glowColor = vec3(0.85, 0.70, 0.51) * glow * 10.0;
       
       totalEmissiveRadiance += glowColor;
       `
