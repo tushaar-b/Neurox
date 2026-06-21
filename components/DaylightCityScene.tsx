@@ -211,21 +211,24 @@ function City() {
       shader.fragmentShader;
 
     shader.fragmentShader = shader.fragmentShader.replace(
-      `#include <emissivemap_fragment>`,
-      `#include <emissivemap_fragment>\n` +
-      `{\n` +
-      `  float dist = distance(vWorldPos.xz, uOrigin.xz);\n` +
-      `  float timeSinceClick = uTime - uClickTime;\n` +
-      `  float ringRadius = timeSinceClick * 80.0;\n` +
-      `  float ringThickness = 12.0;\n` +
-      `  float glow = 1.0 - smoothstep(0.0, ringThickness, abs(dist - ringRadius));\n` +
-      `  glow *= step(0.0, timeSinceClick);\n` +
-      `  float scanline = sin(vWorldPos.y * 2.0 - uTime * 5.0) * 0.5 + 0.5;\n` +
-      `  glow *= (0.5 + 0.5 * scanline);\n` +
-      `  glow *= (1.0 - smoothstep(50.0, 600.0, dist));\n` +
-      `  vec3 glowColor = vec3(0.85, 0.70, 0.51) * glow * 5.0;\n` +
-      `  totalEmissiveRadiance += glowColor;\n` +
-      `}\n`
+      `#include <output_fragment>`,
+      // Inject BEFORE the final gl_FragColor write so we can add emissive glow
+      // on top of the already-lit surface color. output_fragment is ALWAYS
+      // present in MeshStandardMaterial regardless of map/emissivemap settings.
+      `{
+        float dist = distance(vWorldPos.xz, uOrigin.xz);
+        float timeSinceClick = uTime - uClickTime;
+        float ringRadius = timeSinceClick * 80.0;
+        float ringThickness = 12.0;
+        float glow = 1.0 - smoothstep(0.0, ringThickness, abs(dist - ringRadius));
+        glow *= step(0.0, timeSinceClick);
+        float scanline = sin(vWorldPos.y * 2.0 - uTime * 5.0) * 0.5 + 0.5;
+        glow *= (0.5 + 0.5 * scanline);
+        glow *= (1.0 - smoothstep(50.0, 600.0, dist));
+        vec3 glowColor = vec3(0.85, 0.70, 0.51) * glow * 8.0;
+        outgoingLight += glowColor;
+      }
+      #include <output_fragment>`
     );
   }, [uniforms]);
 
@@ -247,7 +250,7 @@ function City() {
           metalness={0.6}
           roughness={0.7}
           onBeforeCompile={handleBeforeCompile}
-          customProgramCacheKey={() => 'city-shockwave-v3'}
+          customProgramCacheKey={() => 'city-shockwave-v4'}
         />
       </instancedMesh>
 
