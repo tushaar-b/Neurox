@@ -43,6 +43,29 @@ function City() {
     uClickTime: { value: -1000.0 },
   }), []);
 
+  // Dark procedural window texture — client-side only (no SSR)
+  const windowTexture = useMemo(() => {
+    if (typeof document === 'undefined') return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d')!;
+    // Dark grey concrete walls
+    ctx.fillStyle = '#181818';
+    ctx.fillRect(0, 0, 512, 512);
+    // Slightly blue-tinted windows
+    ctx.fillStyle = '#242830';
+    for (let i = 0; i < 512; i += 32) {
+      for (let j = 0; j < 512; j += 32) {
+        if (Math.random() > 0.2) ctx.fillRect(i + 2, j + 2, 28, 28);
+      }
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }, []);
+
   // Helper: push uniforms to the GPU shader
   const pushUniforms = useCallback(() => {
     if (materialRef.current?.userData.shader) {
@@ -218,6 +241,7 @@ function City() {
         */}
         <meshStandardMaterial
           ref={materialRef}
+          map={windowTexture || undefined}
           color="#ffffff"
           emissive="#020202"
           metalness={0.6}
