@@ -69,7 +69,7 @@ function City() {
         const ndcX = ((clientX - rect.left) / rect.width) * 2 - 1;
         const ndcY = -((clientY - rect.top) / rect.height) * 2 + 1;
 
-        raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
+        raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
 
         // Check intersections with the InstancedMesh
         const hits = raycaster.intersectObject(meshRef.current, false);
