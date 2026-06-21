@@ -99,7 +99,7 @@ export async function POST(request: Request) {
             },
             {
               "type": "text",
-              "text": { content: ` (${userEmail}). This diagnostic report provides volatility-adjusted allocation guidelines aligned with the TradeSignal PRO system.` }
+              "text": { content: ` (${userEmail}). This diagnostic report provides volatility-adjusted allocation guidelines aligned with the AarthiAI system.` }
             }
           ]
         }

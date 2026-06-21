@@ -49,7 +49,7 @@ function StockRecommendationsGrid({ investing, result }: { investing: any, resul
   return (
     <div className="bg-[#1c1917] border border-[#28231e] rounded-3xl p-6 space-y-4 shadow-xl">
       <h4 className="text-sm font-bold text-[#f5f0e6] uppercase tracking-wider flex items-center gap-2">
-        <Database size={16} className="text-[#d9b382]" /> TradeSignal PRO - Recommended Trades
+        <Database size={16} className="text-[#d9b382]" /> AarthiAI - Recommended Trades
       </h4>
       <p className="text-xs text-[#a89f91] border-b border-[#28231e] pb-3">Based on your {investing.experienceLevel} experience level and investable surplus of ₹{result.investableSurplus.toLocaleString("en-IN")}</p>
       
@@ -280,8 +280,7 @@ function ResultsContent() {
           {needsWantsText}
           Out of your <strong className="text-[#d9b382]">₹{result.surplus.toLocaleString("en-IN")}</strong> surplus, 
           <strong className="text-[#d9b382]">₹{result.monthlyBufferContribution.toLocaleString("en-IN")}</strong> is directed to complete your emergency buffer, 
-          leaving <strong className="text-[#d9b382]">₹{result.investableSurplus.toLocaleString("en-IN")}</strong> as an investable surplus available for markets. 
-          Once your buffer gap is closed, your entire surplus will convert into investable capital.
+          leaving <strong className="text-[#d9b382]">₹{result.investableSurplus.toLocaleString("en-IN")}</strong> as an investable surplus available for markets. This diagnostic report provides volatility-adjusted allocation guidelines aligned with the AarthiAI system.
         </p>
       );
     }
