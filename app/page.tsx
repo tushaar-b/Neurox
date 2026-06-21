@@ -57,7 +57,7 @@ export default function Home() {
 
         {/* STAGE 1: Hero Text overlays the Globe at scrollProgress = 0 */}
         <main
-          className="hero-content-container flex-1 flex flex-col items-center justify-center relative w-full px-6 py-12 my-auto z-10 transition-all duration-300 ease-out"
+          className="hero-content-container flex-1 flex flex-col items-center justify-center relative w-full px-6 py-12 my-auto z-10 transition-all duration-300 ease-out pointer-events-none"
         >
           <div className="relative flex flex-col items-center justify-center text-center max-w-3xl space-y-6">
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.1] text-[#f5f0e6] select-none">

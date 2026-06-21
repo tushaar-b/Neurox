@@ -211,10 +211,10 @@ function City() {
       shader.fragmentShader;
 
     shader.fragmentShader = shader.fragmentShader.replace(
-      `#include <output_fragment>`,
+      `#include <opaque_fragment>`,
       // Inject BEFORE the final gl_FragColor write so we can add emissive glow
-      // on top of the already-lit surface color. output_fragment is ALWAYS
-      // present in MeshStandardMaterial regardless of map/emissivemap settings.
+      // on top of the already-lit surface color. opaque_fragment is ALWAYS
+      // present in MeshStandardMaterial regardless of map/emissivemap settings in newer Three.js.
       `{
         float dist = distance(vWorldPos.xz, uOrigin.xz);
         float timeSinceClick = uTime - uClickTime;
@@ -228,7 +228,7 @@ function City() {
         vec3 glowColor = vec3(0.85, 0.70, 0.51) * glow * 8.0;
         outgoingLight += glowColor;
       }
-      #include <output_fragment>`
+      #include <opaque_fragment>`
     );
   }, [uniforms]);
 
@@ -250,7 +250,7 @@ function City() {
           metalness={0.6}
           roughness={0.7}
           onBeforeCompile={handleBeforeCompile}
-          customProgramCacheKey={() => 'city-shockwave-v4'}
+          customProgramCacheKey={() => 'city-shockwave-v5'}
         />
       </instancedMesh>
 
