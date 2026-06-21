@@ -242,7 +242,7 @@ function WizardForm() {
           muted 
           loop 
           playsInline 
-          className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none z-0"
+          className="absolute inset-0 w-full h-full object-cover opacity-45 pointer-events-none z-0"
         >
           <source src="/yy.mp4" type="video/mp4" />
         </video>
