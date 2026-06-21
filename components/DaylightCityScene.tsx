@@ -26,6 +26,7 @@ function sr(seed: number): number {
 // ─── Procedural Instanced City ───────────────────────────────────────────────
 function City() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
+  const materialRef = useRef<any>(null);
   const [popup, setPopup] = useState<{ position: THREE.Vector3; text: string; id: number } | null>(null);
   
   // Safely generate procedural window textures (client-side only to avoid SSR crash)
@@ -61,10 +62,17 @@ function City() {
 
   const handleClick = (e: any) => {
     e.stopPropagation();
+    console.log("DaylightCityScene: building clicked!", e.point, "uTime:", uniforms.uTime.value);
     // Make the shockwave originate from where they clicked!
     uniforms.uOrigin.value.copy(e.point);
     // Trigger the animation
     uniforms.uClickTime.value = uniforms.uTime.value;
+    
+    // Explicitly update active shader uniforms if available
+    if (materialRef.current && materialRef.current.userData.shader) {
+      materialRef.current.userData.shader.uniforms.uOrigin.value.copy(e.point);
+      materialRef.current.userData.shader.uniforms.uClickTime.value = uniforms.uTime.value;
+    }
     
     // Show random financial fact popup
     const fact = FINANCIAL_FACTS[Math.floor(Math.random() * FINANCIAL_FACTS.length)];
@@ -137,12 +145,19 @@ function City() {
   // Update shader time uniform
   useFrame((state) => {
     uniforms.uTime.value = state.clock.elapsedTime;
+    if (materialRef.current && materialRef.current.userData.shader) {
+      materialRef.current.userData.shader.uniforms.uTime.value = state.clock.elapsedTime;
+    }
   });
 
   const handleBeforeCompile = useCallback((shader: any) => {
     shader.uniforms.uTime = uniforms.uTime;
     shader.uniforms.uOrigin = uniforms.uOrigin;
     shader.uniforms.uClickTime = uniforms.uClickTime;
+    
+    if (materialRef.current) {
+      materialRef.current.userData.shader = shader;
+    }
     
     // Inject Varying for World Position into Vertex Shader
     shader.vertexShader = `
@@ -202,6 +217,7 @@ function City() {
         Dark base color, highly reflective but low roughness for sleek sharp edges.
       */}
       <meshStandardMaterial
+        ref={materialRef}
         map={windowTexture || undefined}
         color="#ffffff" // Let the map dictate the color completely
         emissive="#020202" // Extremely faint baseline so it's not totally pitch black
