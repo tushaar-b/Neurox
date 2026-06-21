@@ -118,7 +118,7 @@ function ResultsContent() {
       });
       const data = await response.json();
       if (data.token) {
-        window.location.href = `https://hack-zeta-indol.vercel.app/login?token=${data.token}`;
+        window.location.href = `https://final-hack-three.vercel.app/login?token=${data.token}`;
       } else {
         console.error("Failed to fetch SSO token");
       }
