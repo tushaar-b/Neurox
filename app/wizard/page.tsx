@@ -244,7 +244,7 @@ function WizardForm() {
           playsInline 
           className="absolute inset-0 w-full h-full object-cover opacity-45 pointer-events-none z-0"
         >
-          <source src="/yy.mp4" type="video/mp4" />
+          <source src="/aarthi-promo.mp4" type="video/mp4" />
         </video>
         
         {/* Top Header */}
