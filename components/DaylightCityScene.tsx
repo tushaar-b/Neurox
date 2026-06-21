@@ -159,52 +159,44 @@ function City() {
       materialRef.current.userData.shader = shader;
     }
     
-    // Inject Varying for World Position into Vertex Shader
-    shader.vertexShader = `
-      varying vec3 vWorldPos;
-      ${shader.vertexShader}
-    `.replace(
-      `#include <worldpos_vertex>`,
-      `#include <worldpos_vertex>
-       vWorldPos = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;`
+    // Inject varying declaration at top of vertex shader.
+    // Use #include <begin_vertex> as injection anchor — it is universally
+    // present in all Three.js vertex shaders (unlike worldpos_vertex which
+    // may be missing on Windows ANGLE/DirectX backends).
+    shader.vertexShader = `varying vec3 vWorldPos;\n` + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace(
+      `#include <begin_vertex>`,
+      `#include <begin_vertex>\n` +
+      // modelMatrix * instanceMatrix * position gives us world-space coords
+      // This works identically on all WebGL implementations (OpenGL + ANGLE)
+      `vWorldPos = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;`
     );
     
     // Inject Shockwave Logic into Fragment Shader
-    shader.fragmentShader = `
-      uniform float uTime;
-      uniform vec3 uOrigin;
-      uniform float uClickTime;
-      varying vec3 vWorldPos;
-      ${shader.fragmentShader}
-    `.replace(
+    shader.fragmentShader =
+      `uniform float uTime;\n` +
+      `uniform vec3 uOrigin;\n` +
+      `uniform float uClickTime;\n` +
+      `varying vec3 vWorldPos;\n` +
+      shader.fragmentShader;
+
+    shader.fragmentShader = shader.fragmentShader.replace(
       `#include <emissivemap_fragment>`,
-      `#include <emissivemap_fragment>
-      
-      // Calculate horizontal distance from the city center
-      float dist = distance(vWorldPos.xz, uOrigin.xz);
-      
-      // Create an expanding ring originating from the click time
-      float timeSinceClick = uTime - uClickTime;
-      float speed = 80.0; // Fast moving pulse
-      float ringRadius = timeSinceClick * speed;
-      float ringThickness = 12.0;
-      
-      // Glow intensity based on distance to the ring's current radius
-      float glow = 1.0 - smoothstep(0.0, ringThickness, abs(dist - ringRadius));
-      glow *= step(0.0, timeSinceClick); // Hide if before click time
-      
-      // Add a horizontal scanline/grid effect inside the glowing area
-      float scanline = sin(vWorldPos.y * 2.0 - uTime * 5.0) * 0.5 + 0.5;
-      glow *= (0.5 + 0.5 * scanline);
-      
-      // Fade out the shockwave far away so it doesn't hit the grid edge
-      glow *= (1.0 - smoothstep(50.0, 600.0, dist));
-      
-      // Gold colour mapping (multiplied slightly to lower intensity)
-      vec3 glowColor = vec3(0.85, 0.70, 0.51) * glow * 5.0;
-      
-      totalEmissiveRadiance += glowColor;
-      `
+      `#include <emissivemap_fragment>\n` +
+      // Use abs() on xz distance so Windows drivers don\'t get confused
+      `{\n` +
+      `  float dist = distance(vWorldPos.xz, uOrigin.xz);\n` +
+      `  float timeSinceClick = uTime - uClickTime;\n` +
+      `  float ringRadius = timeSinceClick * 80.0;\n` +
+      `  float ringThickness = 12.0;\n` +
+      `  float glow = 1.0 - smoothstep(0.0, ringThickness, abs(dist - ringRadius));\n` +
+      `  glow *= step(0.0, timeSinceClick);\n` +
+      `  float scanline = sin(vWorldPos.y * 2.0 - uTime * 5.0) * 0.5 + 0.5;\n` +
+      `  glow *= (0.5 + 0.5 * scanline);\n` +
+      `  glow *= (1.0 - smoothstep(50.0, 600.0, dist));\n` +
+      `  vec3 glowColor = vec3(0.85, 0.70, 0.51) * glow * 5.0;\n` +
+      `  totalEmissiveRadiance += glowColor;\n` +
+      `}\n`
     );
   }, [uniforms]);
 
@@ -219,12 +211,16 @@ function City() {
       <meshStandardMaterial
         ref={materialRef}
         map={windowTexture || undefined}
-        color="#ffffff" // Let the map dictate the color completely
-        emissive="#020202" // Extremely faint baseline so it's not totally pitch black
+        color="#ffffff"
+        emissive="#020202"
         metalness={0.6}
         roughness={0.7}
-        flatShading={true}
+        // flatShading intentionally REMOVED — it conflicts with custom varyings
+        // (like vWorldPos) on Windows ANGLE/DirectX backends, causing varyings
+        // to be undefined or zero in the fragment shader on those platforms.
         onBeforeCompile={handleBeforeCompile}
+        // Force shader recompile when uniforms reference changes
+        customProgramCacheKey={() => 'city-shockwave-v2'}
       />
       </instancedMesh>
 
