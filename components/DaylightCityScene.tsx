@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useMemo, useEffect, useState } from 'react';
+import React, { useRef, useMemo, useEffect, useState, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { Html } from '@react-three/drei';
@@ -139,6 +139,60 @@ function City() {
     uniforms.uTime.value = state.clock.elapsedTime;
   });
 
+  const handleBeforeCompile = useCallback((shader: any) => {
+    shader.uniforms.uTime = uniforms.uTime;
+    shader.uniforms.uOrigin = uniforms.uOrigin;
+    shader.uniforms.uClickTime = uniforms.uClickTime;
+    
+    // Inject Varying for World Position into Vertex Shader
+    shader.vertexShader = `
+      varying vec3 vWorldPos;
+      ${shader.vertexShader}
+    `.replace(
+      `#include <worldpos_vertex>`,
+      `#include <worldpos_vertex>
+       vWorldPos = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;`
+    );
+    
+    // Inject Shockwave Logic into Fragment Shader
+    shader.fragmentShader = `
+      uniform float uTime;
+      uniform vec3 uOrigin;
+      uniform float uClickTime;
+      varying vec3 vWorldPos;
+      ${shader.fragmentShader}
+    `.replace(
+      `#include <emissivemap_fragment>`,
+      `#include <emissivemap_fragment>
+      
+      // Calculate horizontal distance from the city center
+      float dist = distance(vWorldPos.xz, uOrigin.xz);
+      
+      // Create an expanding ring originating from the click time
+      float timeSinceClick = uTime - uClickTime;
+      float speed = 80.0; // Fast moving pulse
+      float ringRadius = timeSinceClick * speed;
+      float ringThickness = 12.0;
+      
+      // Glow intensity based on distance to the ring's current radius
+      float glow = 1.0 - smoothstep(0.0, ringThickness, abs(dist - ringRadius));
+      glow *= step(0.0, timeSinceClick); // Hide if before click time
+      
+      // Add a horizontal scanline/grid effect inside the glowing area
+      float scanline = sin(vWorldPos.y * 2.0 - uTime * 5.0) * 0.5 + 0.5;
+      glow *= (0.5 + 0.5 * scanline);
+      
+      // Fade out the shockwave far away so it doesn't hit the grid edge
+      glow *= (1.0 - smoothstep(50.0, 600.0, dist));
+      
+      // Gold colour mapping (multiplied slightly to lower intensity)
+      vec3 glowColor = vec3(0.85, 0.70, 0.51) * glow * 5.0;
+      
+      totalEmissiveRadiance += glowColor;
+      `
+    );
+  }, [uniforms]);
+
   return (
     <group>
       <instancedMesh ref={meshRef} args={[undefined, undefined, count]} castShadow receiveShadow onClick={handleClick}>
@@ -154,59 +208,7 @@ function City() {
         metalness={0.6}
         roughness={0.7}
         flatShading={true}
-        onBeforeCompile={(shader) => {
-          shader.uniforms.uTime = uniforms.uTime;
-          shader.uniforms.uOrigin = uniforms.uOrigin;
-          shader.uniforms.uClickTime = uniforms.uClickTime;
-          
-          // Inject Varying for World Position into Vertex Shader
-          shader.vertexShader = `
-            varying vec3 vWorldPos;
-            ${shader.vertexShader}
-          `.replace(
-            `#include <worldpos_vertex>`,
-            `#include <worldpos_vertex>
-             vWorldPos = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;`
-          );
-          
-          // Inject Shockwave Logic into Fragment Shader
-          shader.fragmentShader = `
-            uniform float uTime;
-            uniform vec3 uOrigin;
-            uniform float uClickTime;
-            varying vec3 vWorldPos;
-            ${shader.fragmentShader}
-          `.replace(
-            `#include <emissivemap_fragment>`,
-            `#include <emissivemap_fragment>
-            
-            // Calculate horizontal distance from the city center
-            float dist = distance(vWorldPos.xz, uOrigin.xz);
-            
-            // Create an expanding ring originating from the click time
-            float timeSinceClick = uTime - uClickTime;
-            float speed = 80.0; // Fast moving pulse
-            float ringRadius = timeSinceClick * speed;
-            float ringThickness = 12.0;
-            
-            // Glow intensity based on distance to the ring's current radius
-            float glow = smoothstep(ringThickness, 0.0, abs(dist - ringRadius));
-            glow *= step(0.0, timeSinceClick); // Hide if before click time
-            
-            // Add a horizontal scanline/grid effect inside the glowing area
-            float scanline = sin(vWorldPos.y * 2.0 - uTime * 5.0) * 0.5 + 0.5;
-            glow *= (0.5 + 0.5 * scanline);
-            
-            // Fade out the shockwave far away so it doesn't hit the grid edge
-            glow *= smoothstep(600.0, 50.0, dist);
-            
-            // Gold colour mapping (multiplied slightly to lower intensity)
-            vec3 glowColor = vec3(0.85, 0.70, 0.51) * glow * 5.0;
-            
-            totalEmissiveRadiance += glowColor;
-            `
-          );
-        }}
+        onBeforeCompile={handleBeforeCompile}
       />
       </instancedMesh>
 
